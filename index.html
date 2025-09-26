@@ -311,7 +311,10 @@
       titleBlock.style.flex = "1";
 
       const title = document.createElement("h2");
-      title.textContent = "Cardápio do Restaurante";
+      /*title.textContent = "Cardápio do Restaurante";*/
+      const monthName = viewDate.toLocaleString("pt-BR", { month: "long" });
+      const year = viewDate.getFullYear();
+      title.textContent = `Cardápio do Restaurante — ${monthName.charAt(0).toUpperCase() + monthName.slice(1)}/${year}`;
       title.style.color = "#2563eb";
       title.style.fontSize = "24px";
       title.style.fontWeight = "700";
