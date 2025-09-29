@@ -3,252 +3,361 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Cardápio da Cantina — Supabase</title>
+  <title>Cardápio Escolar — Supabase</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
 </head>
 <body class="bg-slate-100 p-4">
 
-<div class="max-w-6xl mx-auto">
-  <header class="flex flex-wrap items-center justify-between mb-4 gap-2">
-    <div>
-      <h1 id="titulo" class="text-2xl font-semibold text-green-600">Cardápio da Cantina</h1>
-      <p class="text-sm text-slate-500">Cadastro de lanches (manhã/tarde) - Colégio Imperatriz. Exporta PNG responsivo!</p>
-    </div>
-    <div class="space-x-2">
-      <button onclick="changeMonth(-1)" class="btn">◀</button>
-      <button onclick="goToday()" class="btn">Hoje</button>
-      <button onclick="changeMonth(1)" class="btn">▶</button>
-      <button id="exportBtn" onclick="generateImage()" class="btn-primary">Exportar PNG</button>
-    </div>
-  </header>
+  <div class="max-w-6xl mx-auto">
+    <header class="flex flex-wrap items-center justify-between mb-4 gap-2">
+      <div>
+        <h1 id="titulo" class="text-2xl font-semibold text-blue-600">Cardápio</h1>
+        <p class="text-sm text-slate-500">Cadastro de almoço - Colégio Imperatriz. Exporta PNG responsivo. (V 2.0)</p>
+      </div>
+      <div class="space-x-2">
+        <button onclick="changeMonth(-1)" class="btn">◀</button>
+        <button onclick="goToday()" class="btn">Hoje</button>
+        <button onclick="changeMonth(1)" class="btn">▶</button>
+        <button id="exportBtn" onclick="generateImage()" class="btn-primary">Exportar PNG</button>
+      </div>
+    </header>
 
-  <div id="calendar" class="p-4 bg-white rounded-2xl shadow-md">
-    <div class="grid grid-cols-6 gap-2 text-center mb-2 font-medium">
-      <div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+    <div id="calendar" class="p-4 bg-white rounded-2xl shadow-md">
+      <div class="grid grid-cols-5 gap-2 text-center mb-2 font-medium">
+        <div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div>
+      </div>
+      <div id="calendar-grid" class="grid grid-cols-5 gap-2"></div>
+      <footer class="mt-4 text-xs text-slate-500">
+        Clique num dia para adicionar/editar o almoço. Layout expansível e responsivo.
+      </footer>
     </div>
-    <div id="calendar-grid" class="grid grid-cols-6 gap-2"></div>
-    <footer class="mt-4 text-xs text-slate-500">
-      Clique num dia para adicionar/editar o cardápio da cantina.
-    </footer>
   </div>
-</div>
 
-<!-- Modal -->
-<div id="modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-  <div class="bg-white rounded-lg p-4 w-full max-w-md max-h-[90vh] overflow-y-auto">
-    <h3 id="modal-title" class="font-semibold mb-2">Editar Cantina</h3>
-    <div class="space-y-2">
-      <label class="block text-sm">Manhã</label>
-      <textarea id="modal-manha" class="w-full p-2 border rounded h-20"></textarea>
-      <label class="block text-sm">Tarde</label>
-      <textarea id="modal-tarde" class="w-full p-2 border rounded h-20"></textarea>
-      <div class="flex justify-end gap-2 pt-2">
-        <button onclick="closeModal()" class="btn">Cancelar</button>
-        <button onclick="saveFromModal()" class="btn-primary">Salvar</button>
+  <!-- Modal -->
+  <div id="modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div class="bg-white rounded-lg p-4 w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <h3 id="modal-title" class="font-semibold mb-2">Editar almoço</h3>
+      <div class="space-y-2">
+        <label class="block text-sm">Base</label>
+        <textarea id="modal-base" class="w-full p-2 border rounded h-16"></textarea>
+        <label class="block text-sm">Guarnição</label>
+        <textarea id="modal-guarnicao" class="w-full p-2 border rounded h-16"></textarea>
+        <label class="block text-sm">Prato Proteico</label>
+        <textarea id="modal-proteico" class="w-full p-2 border rounded h-16"></textarea>
+        <label class="block text-sm">Salada</label>
+        <textarea id="modal-salada" class="w-full p-2 border rounded h-16"></textarea>
+        <label class="block text-sm">Sobremesa</label>
+        <textarea id="modal-sobremesa" class="w-full p-2 border rounded h-16"></textarea>
+        <div class="flex justify-end gap-2 pt-2">
+          <button onclick="closeModal()" class="btn">Cancelar</button>
+          <button onclick="saveFromModal()" class="btn-primary">Salvar</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<style>
-  .btn { padding: 0.5rem 0.75rem; border-radius: .5rem; border: 1px solid #e2e8f0; background: white }
-  .btn-primary { padding: 0.5rem 0.75rem; border-radius: .5rem; background: #16a34a; color: white; border: none }
-</style>
+  <style>
+    .btn { padding: 0.5rem 0.75rem; border-radius: .5rem; border: 1px solid #e2e8f0; background: white }
+    .btn-primary { padding: 0.5rem 0.75rem; border-radius: .5rem; background: #2563eb; color: white; border: none }
+  </style>
 
-<script>
-// ====== CONFIGURAÇÃO SUPABASE ======
-const SUPABASE_URL = "https://dfyhbeppubrmxhoyqjrl.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmeWhiZXBwdWJybXhob3lxanJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg4MzAzOTYsImV4cCI6MjA3NDQwNjM5Nn0.A4NUvSXbxFw-CR0fhSrQo2mJn3C9vI_sgsdWBiuh6Z8";
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  <script>
+  // ====== CONFIGURAÇÃO SUPABASE (já preenchido com seus valores) ======
+  const SUPABASE_URL = "https://dfyhbeppubrmxhoyqjrl.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmeWhiZXBwdWJybXhob3lxanJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg4MzAzOTYsImV4cCI6MjA3NDQwNjM5Nn0.A4NUvSXbxFw-CR0fhSrQo2mJn3C9vI_sgsdWBiuh6Z8";
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ====== elementos ======
-const calendarGrid = document.getElementById("calendar-grid");
-const titulo = document.getElementById("titulo");
-const modal = document.getElementById("modal");
-const modalManha = document.getElementById("modal-manha");
-const modalTarde = document.getElementById("modal-tarde");
-const modalTitle = document.getElementById("modal-title");
-const exportBtn = document.getElementById('exportBtn');
+  // ====== referência de elementos ======
+  const calendarGrid = document.getElementById("calendar-grid");
+  const titulo = document.getElementById("titulo");
+  const modal = document.getElementById("modal");
+  const modalBase = document.getElementById("modal-base");
+  const modalGuarnicao = document.getElementById("modal-guarnicao");
+  const modalProteico = document.getElementById("modal-proteico");
+  const modalSalada = document.getElementById("modal-salada");
+  const modalSobremesa = document.getElementById("modal-sobremesa");
+  const modalTitle = document.getElementById("modal-title");
+  const exportBtn = document.getElementById('exportBtn');
 
-let viewDate = new Date();
-viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
-let menuData = {};
-let modalDate = null;
+  let viewDate = new Date();
+  viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
 
-function formatISO(y,m,d){ return `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`; }
+  let menuData = {};
+  let modalDate = null;
 
-// ====== carregar dados ======
-async function loadData(){
-  try {
-    const { data, error } = await supabaseClient
-      .from("cardapio_cantina")
-      .select("data_iso, manha, tarde")
-      .order("data_iso", { ascending: true });
-    if (error) { console.error("Erro ao carregar:", error); return; }
-    menuData = {};
-    data.forEach(row => {
-      const iso = (typeof row.data_iso === 'string') ? row.data_iso : new Date(row.data_iso).toISOString().slice(0,10);
-      menuData[iso] = { manha: row.manha, tarde: row.tarde };
-    });
-    renderCalendar();
-  } catch(err){
-    console.error("Erro inesperado ao carregar dados:", err);
+  function formatISO(y,m,d){ return `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`; }
+
+  // ====== carregar dados do Supabase ======
+  async function loadData(){
+    try {
+      const { data, error } = await supabaseClient
+        .from("cardapio")
+        .select("data_iso, base, guarnicao, proteico, salada, sobremesa")
+        .order("data_iso", { ascending: true });
+
+      if (error) {
+        console.error("Erro ao carregar:", error);
+        return;
+      }
+      menuData = {};
+      data.forEach(row => {
+        // garantir que data_iso esteja no formato YYYY-MM-DD
+        const iso = (row.data_iso instanceof String || typeof row.data_iso === 'string') ? row.data_iso : new Date(row.data_iso).toISOString().slice(0,10);
+        menuData[iso] = {
+          base: row.base,
+          guarnicao: row.guarnicao,
+          proteico: row.proteico,
+          salada: row.salada,
+          sobremesa: row.sobremesa
+        };
+      });
+      renderCalendar();
+    } catch (err) {
+      console.error("Erro inesperado ao carregar dados:", err);
+    }
   }
-}
 
-// ====== render calendário ======
-function renderCalendar(){
-  const year = viewDate.getFullYear();
-  const month = viewDate.getMonth();
-  titulo.textContent = `Cardápio da Cantina — ${viewDate.toLocaleString('pt-BR',{month:'long'})} ${year}`;
-  calendarGrid.innerHTML = "";
-  const daysInMonth = new Date(year, month+1, 0).getDate();
-  let weekRow = [];
-  for (let d=1; d<=daysInMonth; d++){
-    const dateObj = new Date(year, month, d);
-    const weekday = dateObj.getDay();
-    if (weekday >= 1 && weekday <= 6){
-      weekRow.push(d);
-      if (weekday === 6 || d === daysInMonth){
-        renderWeek(weekRow, year, month);
-        weekRow = [];
+  // ====== render do calendário ======
+  function renderCalendar(){
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
+    titulo.textContent = `Cardápio — ${viewDate.toLocaleString('pt-BR',{month:'long'})} ${year}`;
+    calendarGrid.innerHTML = "";
+
+    const daysInMonth = new Date(year, month+1, 0).getDate();
+    let weekRow = [];
+    for (let d=1; d<=daysInMonth; d++){
+      const dateObj = new Date(year, month, d);
+      const weekday = dateObj.getDay();
+      if (weekday >= 1 && weekday <= 5) {
+        weekRow.push(d);
+        if (weekday === 5 || d === daysInMonth) {
+          renderWeek(weekRow, year, month);
+          weekRow = [];
+        }
       }
     }
   }
-}
 
-function renderWeek(days, year, month){
-  for (let i=1; i<=6; i++){
-    const cell = document.createElement("div");
-    cell.className = "min-h-[120px] p-2 border rounded-md flex flex-col justify-between hover:shadow-lg break-words text-sm bg-white";
-    const dayObj = days.find(d => new Date(year, month, d).getDay() === i);
-    if (!dayObj) { cell.className = "min-h-[120px] bg-slate-50 rounded-md"; calendarGrid.appendChild(cell); continue; }
-    const iso = formatISO(year, month, dayObj);
-    const entry = menuData[iso] || {};
-    let contentHtml = "";
-    if(entry.manha) contentHtml += `<div><span class="font-semibold">Manhã:</span> ${escapeHtml(entry.manha)}</div>`;
-    if(entry.tarde) contentHtml += `<div><span class="font-semibold">Tarde:</span> ${escapeHtml(entry.tarde)}</div>`;
-    if(!contentHtml) contentHtml = `<div class="text-slate-400">Clique para editar</div>`;
-    cell.innerHTML = `
-      <div class="flex justify-between items-start">
-        <div class="text-sm font-semibold">${dayObj}</div>
-        <div class="text-xs text-slate-400">${new Date(year,month,dayObj).toLocaleDateString()}</div>
-      </div>
-      <div class="text-left whitespace-pre-wrap break-words">${contentHtml}</div>
-      <div class="text-right">
-        <button onclick="openModalForDay('${iso}')" class="text-xs underline">Editar</button>
-      </div>
-    `;
-    cell.addEventListener("click", e=>{
-      if(e.target.tagName.toLowerCase()==='button') return;
-      openModalForDay(iso);
-    });
-    calendarGrid.appendChild(cell);
-  }
-}
+  function renderWeek(days, year, month){
+    for (let i=1; i<=5; i++){
+      const cell = document.createElement("div");
+      cell.className = "min-h-[100px] p-2 border rounded-md flex flex-col justify-between hover:shadow-lg break-words text-sm bg-white";
+      const dayObj = days.find(d => new Date(year, month, d).getDay() === i);
+      if (!dayObj) { cell.className = "min-h-[100px] bg-slate-50 rounded-md"; calendarGrid.appendChild(cell); continue; }
+      const iso = formatISO(year, month, dayObj);
+      const entry = menuData[iso] || {};
 
-function escapeHtml(str){ if(!str) return ''; return String(str).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+      let contentHtml = "";
+      if(entry.base) contentHtml += `<div><span class="font-semibold">Base:</span> ${escapeHtml(entry.base)}</div>`;
+      if(entry.guarnicao) contentHtml += `<div><span class="font-semibold">Guarnição:</span> ${escapeHtml(entry.guarnicao)}</div>`;
+      if(entry.proteico) contentHtml += `<div><span class="font-semibold">Proteico:</span> ${escapeHtml(entry.proteico)}</div>`;
+      if(entry.salada) contentHtml += `<div><span class="font-semibold">Salada:</span> ${escapeHtml(entry.salada)}</div>`;
+      if(entry.sobremesa) contentHtml += `<div><span class="font-semibold">Sobremesa:</span> ${escapeHtml(entry.sobremesa)}</div>`;
+      if(!contentHtml) contentHtml = `<div class="text-slate-400">Clique para editar</div>`;
 
-// ====== modal ======
-function openModalForDay(iso){
-  modalDate = iso;
-  const entry = menuData[iso] || {};
-  modalManha.value = entry.manha || "";
-  modalTarde.value = entry.tarde || "";
-  modalTitle.textContent = "Editar Cantina — " + iso;
-  modal.classList.remove("hidden");
-  modalManha.focus();
-}
-
-function closeModal(){ modal.classList.add("hidden"); }
-
-// ====== salvar no Supabase ======
-async function saveFromModal(){
-  if(!modalDate) return;
-  const newEntry = {
-    manha: modalManha.value.trim(),
-    tarde: modalTarde.value.trim()
-  };
-  const allEmpty = Object.values(newEntry).every(v => !v);
-  const isoDate = new Date(modalDate).toISOString().slice(0,10); // garante YYYY-MM-DD
-  try {
-    let res;
-    if(allEmpty){
-      res = await supabaseClient.from("cardapio_cantina").delete().eq("data_iso", isoDate);
-      if(res.error) console.error("Erro delete:", res.error);
-      delete menuData[isoDate];
-    } else {
-      res = await supabaseClient.from("cardapio_cantina")
-        .upsert({ data_iso: isoDate, ...newEntry }, { onConflict: 'data_iso' });
-      if(res.error) console.error("Erro upsert:", res.error);
-      else menuData[isoDate] = newEntry;
+      cell.innerHTML = `
+        <div class="flex justify-between items-start">
+          <div class="text-sm font-semibold">${dayObj}</div>
+          <div class="text-xs text-slate-400">${new Date(year,month,dayObj).toLocaleDateString()}</div>
+        </div>
+        <div class="text-left whitespace-pre-wrap break-words">${contentHtml}</div>
+        <div class="text-right">
+          <button onclick="openModalForDay('${iso}')" class="text-xs underline">Editar</button>
+        </div>
+      `;
+      cell.addEventListener("click", (e) => {
+        if (e.target.tagName.toLowerCase() === 'button') return;
+        openModalForDay(iso);
+      });
+      calendarGrid.appendChild(cell);
     }
-  } catch(err){
-    console.error("Erro inesperado:", err);
-    alert("Erro ao salvar no banco");
   }
-  closeModal();
-  renderCalendar();
-}
 
-// ====== navegação ======
-function changeMonth(delta){ viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth()+delta, 1); renderCalendar(); }
-function goToday(){ const d=new Date(); viewDate=new Date(d.getFullYear(),d.getMonth(),1); renderCalendar(); }
+  function escapeHtml(str){ if(!str) return ''; return String(str).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
 
-// ====== export PNG ======
-async function generateImage(){
-  if(exportBtn.disabled) return;
-  exportBtn.disabled=true;
-  const originalText = exportBtn.textContent;
-  exportBtn.textContent='Gerando...';
-
-  try {
-    const calendar=document.getElementById("calendar");
-    const clone=calendar.cloneNode(true);
-    clone.querySelectorAll("button").forEach(el=>el.remove());
-    clone.querySelectorAll(".text-right").forEach(el=>el.remove());
-
-    const wrapper=document.createElement('div');
-    wrapper.style.position='absolute';
-    wrapper.style.left='-9999px';
-    wrapper.style.background='white';
-    wrapper.style.padding='40px';
-    wrapper.style.border='4px solid #16a34a';
-    wrapper.style.borderRadius='20px';
-
-    const title=document.createElement("h2");
-    const monthName=viewDate.toLocaleString("pt-BR",{month:"long"});
-    const year=viewDate.getFullYear();
-    title.textContent=`Cardápio da Cantina — ${monthName}/${year}`;
-    title.style.color="#16a34a";
-    title.style.fontSize="24px";
-    title.style.fontWeight="700";
-    title.style.marginBottom="20px";
-
-    wrapper.appendChild(title);
-    wrapper.appendChild(clone);
-    document.body.appendChild(wrapper);
-
-    const canvas = await html2canvas(wrapper, { scale: 2, backgroundColor: "#ffffff" });
-    const dataURL = canvas.toDataURL("image/png");
-    const a=document.createElement("a");
-    a.href=dataURL;
-    a.download=`cantina-${year}-${String(viewDate.getMonth()+1).padStart(2,"0")}.png`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    wrapper.remove();
-  } finally {
-    exportBtn.disabled=false;
-    exportBtn.textContent=originalText;
+  // ====== modal ======
+  function openModalForDay(iso){
+    modalDate = iso;
+    const entry = menuData[iso] || {};
+    modalBase.value = entry.base || "";
+    modalGuarnicao.value = entry.guarnicao || "";
+    modalProteico.value = entry.proteico || "";
+    modalSalada.value = entry.salada || "";
+    modalSobremesa.value = entry.sobremesa || "";
+    modalTitle.textContent = "Editar almoço — " + iso;
+    modal.classList.remove("hidden");
+    modalBase.focus();
   }
-}
 
-// ====== inicializa ======
-loadData();
-</script>
+  function closeModal(){ modal.classList.add("hidden"); }
 
+  // ====== salvar / deletar no Supabase ======
+  async function saveFromModal(){
+    if (!modalDate) return;
+    const newEntry = {
+      base: modalBase.value.trim(),
+      guarnicao: modalGuarnicao.value.trim(),
+      proteico: modalProteico.value.trim(),
+      salada: modalSalada.value.trim(),
+      sobremesa: modalSobremesa.value.trim()
+    };
+
+    const allEmpty = Object.values(newEntry).every(v => !v);
+    try {
+      if (allEmpty) {
+        // remover do banco se existir
+        const { error: delErr } = await supabaseClient
+          .from("cardapio")
+          .delete()
+          .eq("data_iso", modalDate);
+        if (delErr) {
+          console.error("Erro ao deletar:", delErr);
+          alert("Erro ao deletar do banco.");
+        } else {
+          delete menuData[modalDate];
+        }
+      } else {
+        // upsert (vai inserir ou atualizar por data_iso)
+        const { error: upErr } = await supabaseClient
+          .from("cardapio")
+          .upsert({
+            data_iso: modalDate,
+            ...newEntry
+          }, { onConflict: 'data_iso' });
+        if (upErr) {
+          console.error("Erro ao salvar:", upErr);
+          alert("Erro ao salvar no banco.");
+        } else {
+          menuData[modalDate] = newEntry;
+        }
+      }
+    } catch (err) {
+      console.error("Erro inesperado ao salvar:", err);
+      alert("Erro inesperado ao salvar.");
+    }
+    closeModal();
+    renderCalendar();
+  }
+
+  function changeMonth(delta){ viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth()+delta, 1); renderCalendar(); }
+  function goToday(){ const d = new Date(); viewDate = new Date(d.getFullYear(), d.getMonth(), 1); renderCalendar(); }
+
+  // ====== Export PNG (mantive seu fluxo, copiado e adaptado) ======
+  async function generateImage(){
+    if (exportBtn.disabled) return;
+    exportBtn.disabled = true;
+    const originalText = exportBtn.textContent;
+    exportBtn.textContent = 'Gerando...';
+
+    try {
+      const calendar = document.getElementById("calendar");
+      const rect = calendar.getBoundingClientRect();
+      const calWidth = Math.ceil(rect.width);
+
+      const clone = calendar.cloneNode(true);
+      clone.classList.remove("shadow-md");
+      const footer = clone.querySelector("footer");
+      if (footer) footer.remove();
+
+      // remover botões e áreas de edição no clone
+      clone.querySelectorAll("button").forEach(el => el.remove());
+      clone.querySelectorAll(".text-right").forEach(el => el.remove());
+      clone.querySelectorAll(".hover\\:shadow-lg").forEach(n => n.classList.remove("hover:shadow-lg"));
+
+      clone.style.boxShadow = 'none';
+      clone.style.background = 'transparent';
+      clone.style.width = calWidth + 'px';
+      clone.style.boxSizing = 'border-box';
+
+      const wrapper = document.createElement('div');
+      wrapper.style.position = 'absolute';
+      wrapper.style.left = '-9999px';
+      wrapper.style.top = '0';
+      wrapper.style.padding = '40px';
+      wrapper.style.boxSizing = 'border-box';
+      wrapper.style.background = 'white';
+      wrapper.style.border = '4px solid #2563eb';
+      wrapper.style.borderRadius = '20px';
+      wrapper.style.overflow = 'visible';
+      wrapper.style.fontFamily = "Arial, sans-serif";
+
+      // header custom
+      const headerRow = document.createElement("div");
+      headerRow.style.display = "flex";
+      headerRow.style.alignItems = "center";
+      headerRow.style.justifyContent = "flex-start";
+      headerRow.style.gap = "20px";
+      headerRow.style.marginBottom = "25px";
+
+      const logo = document.createElement("img");
+      logo.src = "https://i.ibb.co/KxSrH0Nj/logo.png";
+      logo.alt = "Logo";
+      logo.crossOrigin = "anonymous";
+      logo.style.maxHeight = "70px";
+      logo.style.width = "auto";
+      logo.style.display = "block";
+
+      await new Promise((resolve) => {
+        logo.onload = resolve;
+        logo.onerror = resolve;
+      });
+
+      headerRow.appendChild(logo);
+
+      const titleBlock = document.createElement("div");
+      titleBlock.style.flex = "1";
+
+      const title = document.createElement("h2");
+      /*title.textContent = "Cardápio do Restaurante";*/
+      const monthName = viewDate.toLocaleString("pt-BR", { month: "long" });
+      const year = viewDate.getFullYear();
+      title.textContent = `Cardápio do Restaurante — ${monthName.charAt(0).toUpperCase() + monthName.slice(1)}/${year}`;
+      title.style.color = "#2563eb";
+      title.style.fontSize = "24px";
+      title.style.fontWeight = "700";
+      title.style.marginBottom = "6px";
+
+      const iconsRow = document.createElement("div");
+      iconsRow.innerHTML = "🍽️ 🥗 🍖 🍊 🍮";
+      iconsRow.style.fontSize = "22px";
+
+      titleBlock.appendChild(title);
+      titleBlock.appendChild(iconsRow);
+      headerRow.appendChild(titleBlock);
+
+      wrapper.appendChild(headerRow);
+      wrapper.appendChild(clone);
+      document.body.appendChild(wrapper);
+
+      const canvas = await html2canvas(wrapper, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true
+      });
+
+      const dataURL = canvas.toDataURL("image/png");
+      const a = document.createElement("a");
+      a.href = dataURL;
+      a.download = `cardapio-${viewDate.getFullYear()}-${String(viewDate.getMonth()+1).padStart(2,"0")}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      wrapper.remove();
+    } catch (err) {
+      console.error('[export] erro ao gerar PNG:', err);
+      alert('Erro ao gerar PNG. Veja console para detalhes.');
+    } finally {
+      exportBtn.disabled = false;
+      exportBtn.textContent = originalText;
+    }
+  }
+
+  // ====== inicializa ======
+  loadData();
+  </script>
 </body>
 </html>
