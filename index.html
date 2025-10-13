@@ -14,7 +14,7 @@
     <header class="flex flex-wrap items-center justify-between mb-4 gap-2">
       <div>
         <h1 id="titulo" class="text-2xl font-semibold text-blue-600">Cardápio</h1>
-        <p class="text-sm text-slate-500">Cadastro de almoço - Colégio Imperatriz. Exporta PNG responsivo. (V 2.0)</p>
+        <p class="text-sm text-slate-500">Cadastro de almoço - Colégio Imperatriz. Exporta PNG responsivo. (V 2.1)</p>
       </div>
       <div class="space-x-2">
         <button onclick="changeMonth(-1)" class="btn">◀</button>
@@ -61,6 +61,16 @@
   <style>
     .btn { padding: 0.5rem 0.75rem; border-radius: .5rem; border: 1px solid #e2e8f0; background: white }
     .btn-primary { padding: 0.5rem 0.75rem; border-radius: .5rem; background: #2563eb; color: white; border: none }
+     /* ===== Aumentar fonte dos textos do calendário ===== */
+  #calendar-grid .text-left {
+    font-size: 1rem;        /* padrão ~16px */
+    line-height: 1.4;
+  }
+
+  /* Tornar o nome das seções (ex: "Manhã:", "Tarde:") mais visível */
+  #calendar-grid .font-semibold {
+    font-size: 1.05rem;
+  }
   </style>
 
   <script>
