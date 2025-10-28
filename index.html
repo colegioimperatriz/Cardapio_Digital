@@ -16,7 +16,7 @@
     <header class="flex flex-wrap items-center justify-between mb-4 gap-2">
       <div>
         <h1 id="titulo" class="text-2xl font-semibold text-blue-600">Cardápio</h1>
-        <p class="text-sm text-slate-500">Cadastro de almoço - Colégio Imperatriz. Exporta PNG responsivo. (V 2.4)</p>
+        <p class="text-sm text-slate-500">Cadastro de almoço - Colégio Imperatriz. Exporta PNG responsivo. (V 2.5)</p>
       </div>
       <div class="space-x-2">
         <button onclick="changeMonth(-1)" class="btn">◀</button>
@@ -347,7 +347,7 @@
       document.body.appendChild(wrapper);
 
       const canvas = await html2canvas(wrapper, {
-        scale: 2,
+        scale: 1.5,
         backgroundColor: "#ffffff",
         useCORS: true
       });
@@ -469,7 +469,7 @@ async function generatePDF() {
     const pageHeight = pdf.internal.pageSize.getHeight();
 
   // Calcula escala para preencher toda a página A4 (paisagem)
-const ratio = Math.max(pageWidth / canvas.width, pageHeight / canvas.height);
+const ratio = Math.min(pageWidth / canvas.width, pageHeight / canvas.height);
 const imgWidth = canvas.width * ratio;
 const imgHeight = canvas.height * ratio;
 
