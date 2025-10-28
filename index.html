@@ -463,16 +463,20 @@ async function generatePDF() {
     const imgData = canvas.toDataURL("image/png");
 
     // cria PDF em paisagem (A4)
-    const pdf = new jsPDF("landscape", "mm", "a4");
-
     const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
+const pageHeight = pdf.internal.pageSize.getHeight();
 
-    const imgWidth = pageWidth;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+// Calcula escala para ocupar o máximo da página A4 paisagem, mantendo proporção
+const ratio = Math.min(pageWidth / canvas.width, pageHeight / canvas.height);
+const imgWidth = canvas.width * ratio;
+const imgHeight = canvas.height * ratio;
 
-    const y = (pageHeight - imgHeight) / 2; // centraliza verticalmente
-    pdf.addImage(imgData, "PNG", 0, y, imgWidth, imgHeight);
+// Centraliza imagem no meio da página
+const x = (pageWidth - imgWidth) / 2;
+const y = (pageHeight - imgHeight) / 2;
+
+pdf.addImage(imgData, "PNG", x, y, imgWidth, imgHeight);
+
 
     pdf.save(`cardapio-${year}-${String(viewDate.getMonth() + 1).padStart(2, "0")}.pdf`);
 
