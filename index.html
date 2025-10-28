@@ -7,6 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body class="bg-slate-100 p-4">
 
@@ -21,6 +22,7 @@
         <button onclick="goToday()" class="btn">Hoje</button>
         <button onclick="changeMonth(1)" class="btn">▶</button>
         <button id="exportBtn" onclick="generateImage()" class="btn-primary">Exportar PNG</button>
+        <button id="exportPdfBtn" onclick="generatePDF()" class="btn-primary">Exportar PDF</button>
       </div>
     </header>
 
@@ -261,6 +263,121 @@
     exportBtn.disabled = true;
     const originalText = exportBtn.textContent;
     exportBtn.textContent = 'Gerando...';
+
+    async function generatePDF() {
+  const exportBtn = document.getElementById('exportPdfBtn');
+  if (exportBtn.disabled) return;
+  exportBtn.disabled = true;
+  const originalText = exportBtn.textContent;
+  exportBtn.textContent = 'Gerando PDF...';
+
+  try {
+    const calendar = document.getElementById("calendar");
+    const rect = calendar.getBoundingClientRect();
+    const calWidth = Math.ceil(rect.width);
+
+    // Criar clone igual ao da função PNG
+    const clone = calendar.cloneNode(true);
+    clone.classList.remove("shadow-md");
+    clone.querySelectorAll("button").forEach(el => el.remove());
+    clone.querySelectorAll(".text-right").forEach(el => el.remove());
+
+    clone.style.background = 'white';
+    clone.style.width = calWidth + 'px';
+    clone.style.boxSizing = 'border-box';
+
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'absolute';
+    wrapper.style.left = '-9999px';
+    wrapper.style.top = '0';
+    wrapper.style.padding = '40px';
+    wrapper.style.boxSizing = 'border-box';
+    wrapper.style.background = 'white';
+    wrapper.style.border = '4px solid #2563eb';
+    wrapper.style.borderRadius = '20px';
+    wrapper.style.fontFamily = "Arial, sans-serif";
+
+    // Cabeçalho (igual ao PNG)
+    const headerRow = document.createElement("div");
+    headerRow.style.display = "flex";
+    headerRow.style.alignItems = "center";
+    headerRow.style.gap = "20px";
+    headerRow.style.marginBottom = "25px";
+
+    const logo = document.createElement("img");
+    logo.src = "https://i.ibb.co/KxSrH0Nj/logo.png";
+    logo.alt = "Logo";
+    logo.crossOrigin = "anonymous";
+    logo.style.maxHeight = "70px";
+
+    await new Promise((resolve) => {
+      logo.onload = resolve;
+      logo.onerror = resolve;
+    });
+
+    const titleBlock = document.createElement("div");
+    const monthName = viewDate.toLocaleString("pt-BR", { month: "long" });
+    const year = viewDate.getFullYear();
+
+    const title = document.createElement("h2");
+    title.textContent = `Cardápio do Restaurante — ${monthName.charAt(0).toUpperCase() + monthName.slice(1)}/${year}`;
+    title.style.color = "#2563eb";
+    title.style.fontSize = "22px";
+    title.style.fontWeight = "700";
+    title.style.marginBottom = "6px";
+
+    const iconsRow = document.createElement("div");
+    iconsRow.innerHTML = "🍽️ 🥗 🍖 🍊 🍮";
+    iconsRow.style.fontSize = "20px";
+
+    titleBlock.appendChild(title);
+    titleBlock.appendChild(iconsRow);
+
+    headerRow.appendChild(logo);
+    headerRow.appendChild(titleBlock);
+
+    wrapper.appendChild(headerRow);
+    wrapper.appendChild(clone);
+    document.body.appendChild(wrapper);
+
+    // Gerar canvas do conteúdo
+    const canvas = await html2canvas(wrapper, {
+      scale: 2,
+      backgroundColor: "#ffffff",
+      useCORS: true
+    });
+
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+
+    const imgWidth = 210; // largura A4
+    const pageHeight = 297;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+
+    pdf.save(`cardapio-${year}-${String(viewDate.getMonth() + 1).padStart(2, "0")}.pdf`);
+    wrapper.remove();
+  } catch (err) {
+    console.error('[export] erro ao gerar PDF:', err);
+    alert('Erro ao gerar PDF. Veja console para detalhes.');
+  } finally {
+    exportBtn.disabled = false;
+    exportBtn.textContent = originalText;
+  }
+}
+
 
     try {
       const calendar = document.getElementById("calendar");
