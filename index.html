@@ -16,7 +16,7 @@
     <header class="flex flex-wrap items-center justify-between mb-4 gap-2">
       <div>
         <h1 id="titulo" class="text-2xl font-semibold text-blue-600">Cardápio</h1>
-        <p class="text-sm text-slate-500">Cadastro de almoço - Colégio Imperatriz. Exporta PNG responsivo. (V 2.3)</p>
+        <p class="text-sm text-slate-500">Cadastro de almoço - Colégio Imperatriz. Exporta PNG responsivo. (V 2.1)</p>
       </div>
       <div class="space-x-2">
         <button onclick="changeMonth(-1)" class="btn">◀</button>
@@ -369,8 +369,8 @@
       exportBtn.textContent = originalText;
     }
   }
+
 async function generatePDF() {
-  const { jsPDF } = window.jspdf;
   const pdfBtn = document.getElementById("exportPdfBtn");
   if (pdfBtn.disabled) return;
   pdfBtn.disabled = true;
@@ -454,6 +454,7 @@ async function generatePDF() {
     wrapper.appendChild(clone);
     document.body.appendChild(wrapper);
 
+    // renderiza o conteúdo para imagem
     const canvas = await html2canvas(wrapper, {
       scale: 2,
       backgroundColor: "#ffffff",
@@ -462,22 +463,20 @@ async function generatePDF() {
 
     const imgData = canvas.toDataURL("image/png");
 
-    // cria PDF em paisagem (A4)
+    // agora cria o PDF (A4 paisagem)
+    const pdf = new window.jspdf.jsPDF("landscape", "mm", "a4");
     const pageWidth = pdf.internal.pageSize.getWidth();
-const pageHeight = pdf.internal.pageSize.getHeight();
+    const pageHeight = pdf.internal.pageSize.getHeight();
 
-// Calcula escala para ocupar o máximo da página A4 paisagem, mantendo proporção
-const ratio = Math.min(pageWidth / canvas.width, pageHeight / canvas.height);
-const imgWidth = canvas.width * ratio;
-const imgHeight = canvas.height * ratio;
+    // Calcula escala proporcional para preencher a página
+    const ratio = Math.min(pageWidth / canvas.width, pageHeight / canvas.height);
+    const imgWidth = canvas.width * ratio;
+    const imgHeight = canvas.height * ratio;
 
-// Centraliza imagem no meio da página
-const x = (pageWidth - imgWidth) / 2;
-const y = (pageHeight - imgHeight) / 2;
+    const x = (pageWidth - imgWidth) / 2;
+    const y = (pageHeight - imgHeight) / 2;
 
-pdf.addImage(imgData, "PNG", x, y, imgWidth, imgHeight);
-
-
+    pdf.addImage(imgData, "PNG", x, y, imgWidth, imgHeight);
     pdf.save(`cardapio-${year}-${String(viewDate.getMonth() + 1).padStart(2, "0")}.pdf`);
 
     wrapper.remove();
