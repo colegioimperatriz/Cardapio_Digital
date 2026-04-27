@@ -346,11 +346,11 @@
       wrapper.appendChild(clone);
       document.body.appendChild(wrapper);
 
-      const canvas = await html2canvas(wrapper, {
-        scale: 1.5,
-        backgroundColor: "#ffffff",
-        useCORS: true
-      });
+   const canvas = await html2canvas(wrapper, {
+  scale: 1.2, // antes era 2 (muito pesado)
+  backgroundColor: "#ffffff",
+  useCORS: true
+});
 
       const dataURL = canvas.toDataURL("image/png");
       const a = document.createElement("a");
@@ -461,7 +461,7 @@ async function generatePDF() {
       useCORS: true
     });
 
-    const imgData = canvas.toDataURL("image/png");
+   const imgData = canvas.toDataURL("image/jpeg", 0.7); // compressão 70%
 
     // agora cria o PDF (A4 paisagem)
     const pdf = new window.jspdf.jsPDF("landscape", "mm", "a4");
@@ -478,7 +478,7 @@ const x = (pageWidth - imgWidth) / 2;
 const y = (pageHeight - imgHeight) / 2;
 
 // Adiciona a imagem ocupando o A4 completo
-pdf.addImage(imgData, "PNG", x, y, imgWidth, imgHeight);
+pdf.addImage(imgData, "JPEG", x, y, imgWidth, imgHeight);
 
     pdf.save(`cardapio-${year}-${String(viewDate.getMonth() + 1).padStart(2, "0")}.pdf`);
 
